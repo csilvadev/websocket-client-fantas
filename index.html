@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Client</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 16px; }
+        #messages { background: #e3e3e3; min-height: 100px; margin-bottom: 14px; padding: 12px; border-radius: 5px; }
+        input[type="text"] { width: 260px; margin-right: 7px; }
+        button { padding: 4px 14px; }
+        h1 { color: #2d5b98; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Client</h1>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type your message">
+    <button onclick="sendMessage(document.getElementById('messageInput').value)">Send</button>
+    <br><br>
+    <input type="text" id="streamInput" placeholder="Stream ID">
+    <button onclick="sendStreamMessage()">Send</button>
+    <script>
+        // Establish a WebSocket connection
+        const socket = new WebSocket('wss://api.mais.uol.com.br/websocket/v1/customer?domain_id=17');
+        socket.onopen = (event) => {
+            console.log('WebSocket connection established:', event);
+            socket.send('{"type":"HELLO"}');
+        };
+        socket.onmessage = (event) => {
+            console.log('Mensagem do server:', event.data);
+            const messagesDiv = document.getElementById('messages');
+            if (messagesDiv) {
+                messagesDiv.innerHTML += `<p><b>Server:</b> ${event.data}</p>`;
+            }
+        };
+        socket.onclose = (event) => {
+            if (event.wasClean) {
+                console.log(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+            } else {
+                console.error('Connection died');
+            }
+        };
+        socket.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+        };
+        function sendMessage(mensagem) {
+            if (socket.readyState === WebSocket.OPEN && mensagem) {
+                socket.send(mensagem);
+                console.log('Sent:', mensagem);
+            } else {
+                console.warn('WebSocket not open or message input is empty.');
+            }
+        }
+        function sendStreamMessage() {
+            var mensagem = `{"type":"STREAM", "stream_id": "${document.getElementById('streamInput').value}" }`;
+            sendMessage(mensagem);
+        }
+    </script>
+</body>
+</html>
